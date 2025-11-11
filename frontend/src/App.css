@@ -1,42 +1,172 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* === ESTILOS GERAIS === */
+
+.pagina-container {
+  background: #fff;
+  padding: 2rem 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  margin-top: 2rem;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.titulo-secao {
+  font-size: 1.8rem;
+  color: #1e3a8a;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.tabela-formulario {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.8rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.tabela-formulario td {
+  padding: 10px;
+  text-align: left;
 }
 
-.card {
-  padding: 2em;
+.tabela-formulario label {
+  font-weight: 600;
+  color: #334155;
 }
 
-.read-the-docs {
-  color: #888;
+.tabela-formulario input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 1rem;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s;
 }
+
+.tabela-formulario input:focus {
+  border-color: #2563eb;
+}
+
+.botao-salvar {
+  background-color: #2563eb;
+  color: #fff;
+  font-size: 1.05rem;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.25s;
+  margin-top: 0.5rem;
+}
+
+.botao-salvar:hover {
+  background-color: #1d4ed8;
+}
+
+.lista-cadastrados {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.lista-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.lista-item span {
+  font-size: 1rem;
+  color: #334155;
+}
+
+.botoes-acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.botao-acao {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.botao-editar {
+  background: #fbbf24;
+  color: #000;
+}
+
+.botao-editar:hover {
+  background: #f59e0b;
+}
+
+.botao-inativar {
+  background: #ef4444;
+  color: #fff;
+}
+
+.botao-inativar:hover {
+  background: #dc2626;
+}
+
+.botao-ativar {
+  background: #22c55e;
+  color: #fff;
+}
+
+.botao-ativar:hover {
+  background: #16a34a;
+}
+
+/* === Navegação horizontal === */
+.navegacao ul {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navegacao .nav-link {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #2563eb; /* mesmo azul dos botões */
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.25s, transform 0.2s;
+}
+
+.navegacao .nav-link:hover {
+  background-color: #1d4ed8; /* efeito hover */
+  transform: translateY(-2px);
+}
+
+.navegacao .nav-link.active {
+  background-color: #1e40af; /* destaque para o link ativo */
+}
+
+.botao-admin:hover {
+  background-color: #d97706;
+  transition: background-color 0.2s ease;
+}
+
+.menu-dropdown button:hover {
+  background-color: #dc2626;
+  transition: background-color 0.2s ease;
+}
+
+
