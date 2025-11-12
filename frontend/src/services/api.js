@@ -10,4 +10,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export default api;
+export default api;// frontend/src/App.jsx (Exemplo simplificado de rotas)
+
+import MensalidadesPage from './pages/MensalidadesPage';
+// ... outros imports
+
+function App() {
+  return (
+    <Router>
+        <Header /> {/* Seu componente de Menu/Header */}
+        <Routes>
+            {/* ... outras rotas ... */}
+            <Route path="/mensalidades" element={<MensalidadesPage />} /> 
+            {/* ... */}
+        </Routes>
+    </Router>
+  );
+}
