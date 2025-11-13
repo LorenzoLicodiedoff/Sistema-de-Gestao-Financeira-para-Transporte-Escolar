@@ -8,7 +8,7 @@ export default function HomePage({ admin }) {
           <>
             <h1>Bem-vindo ao SGFTE</h1>
             <p>
-              Sistema de Gestão de Frotas e Transporte Escolar.<br />
+              Sistema de Gestão Financeira de Transporte Escolar.<br />
               Faça login como administrador para gerenciar responsáveis, alunos,
               veículos e motoristas.
             </p>
