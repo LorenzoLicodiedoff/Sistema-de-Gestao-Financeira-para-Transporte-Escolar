@@ -6,6 +6,9 @@ import AdminAuthPage from "./pages/AdminAuthPage";
 import AlunosResponsaveisPage from "./pages/AlunosResponsaveisPage";
 import FuncionariosPage from "./pages/FuncionariosPage";
 import VeiculosPage from "./pages/VeiculosPage";
+import DespesasPage from "./pages/DespesasPage";
+import ReceitasPage from "./pages/ReceitasPage";
+import RelatoriosPage from "./pages/RelatoriosPage";
 
 function NavLinks({ admin }) {
   const location = useLocation();
@@ -13,6 +16,9 @@ function NavLinks({ admin }) {
     { to: "/alunos-e-responsaveis", label: "Alunos e Responsáveis" },
     { to: "/funcionarios", label: "Funcionários" },
     { to: "/veiculos", label: "Veículos" },
+    { to: "/despesas", label: "Despesas" },
+    { to: "/receitas", label: "Receitas" },
+    { to: "/relatorios", label: "Relatórios" },
   ];
 
   if (!admin) return null;
@@ -112,6 +118,18 @@ export default function App() {
             <Route
               path="/veiculos"
               element={adminLogado ? <VeiculosPage /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/despesas"
+              element={adminLogado ? <DespesasPage /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/receitas"
+              element={adminLogado ? <ReceitasPage /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/relatorios"
+              element={adminLogado ? <RelatoriosPage /> : <Navigate to="/admin/login" />}
             />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

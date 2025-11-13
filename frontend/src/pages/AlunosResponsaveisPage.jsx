@@ -1,29 +1,57 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import api from '../services/api'; // Nosso conector de API
+import HistoricoPagamentosModal from "./HistoricoPagamentosModal";
 
 export default function AlunosResponsaveisPage() {
-  const [responsaveis, setResponsaveis] = useState([]);
+  
+  // --- ESTADOS ---
+  const [responsaveis, setResponsaveis] = useState([]); 
+  
   const [novoResponsavel, setNovoResponsavel] = useState({
-    nome: "",
-    telefone: "",
-    logradouro: "",
-    numero: "",
-    bairro: "",
-    cep: "",
-    alunos: [],
+    nome: "", telefone: "", logradouro: "", numero: "", bairro: "", cep: "",
   });
-  const [novoAluno, setNovoAluno] = useState({
-    nome: "",
-    instituicao: "",
-    serie: "",
-    nivelEscolaridade: "",
-    nivelOutro: "",
-    ativo: true,
-  });
-  const [indexEdicao, setIndexEdicao] = useState(null);
-  const [adicionandoAluno, setAdicionandoAluno] = useState(false);
-  const [responsavelSelecionado, setResponsavelSelecionado] = useState(null);
+  const [idEdicao, setIdEdicao] = useState(null); 
 
-  // --- Funções de Responsável ---
+  const [novoAluno, setNovoAluno] = useState({
+    nome: "", instituicao: "", serie: "", nivelEscolaridade: "", nivelOutro: "", ativo: true,
+  });
+  const [responsavelSelecionado, setResponsavelSelecionado] = useState(null); 
+  const [idEdicaoAluno, setIdEdicaoAluno] = useState(null); 
+  const [alunoParaHistorico, setAlunoParaHistorico] = useState(null);
+
+
+  // --- FUNÇÃO PRINCIPAL: Buscar todos os dados do backend ---
+  const buscarResponsaveis = () => {
+    api.get('/responsaveis') 
+      .then(response => {
+        setResponsaveis(response.data);
+      })
+      .catch(error => {
+        console.error("Erro ao buscar responsáveis:", error);
+        alert("Erro ao carregar dados. O backend está rodando?");
+      });
+  };
+
+  // --- useEffect: Roda UMA VEZ quando a página carrega ---
+  useEffect(() => {
+    buscarResponsaveis(); 
+  }, []); 
+
+
+  // --- Limpar Formulários ---
+  const limparFormResponsavel = () => {
+    setNovoResponsavel({ nome: "", telefone: "", logradouro: "", numero: "", bairro: "", cep: "" });
+    setIdEdicao(null);
+  };
+  const limparFormAluno = () => {
+    setNovoAluno({ nome: "", instituicao: "", serie: "", nivelEscolaridade: "", nivelOutro: "", ativo: true });
+    setIdEdicaoAluno(null);
+    setResponsavelSelecionado(null);
+  };
+
+  
+  // --- Funções de Responsável (com API) ---
+  
   const salvarResponsavel = () => {
     const { nome, telefone, logradouro, numero, bairro, cep } = novoResponsavel;
     if (!nome || !telefone || !logradouro || !numero || !bairro || !cep) {
@@ -31,51 +59,58 @@ export default function AlunosResponsaveisPage() {
       return;
     }
 
-    if (indexEdicao !== null) {
-      const listaAtualizada = [...responsaveis];
-      listaAtualizada[indexEdicao] = novoResponsavel;
-      setResponsaveis(listaAtualizada);
-      setIndexEdicao(null);
-    } else {
-      setResponsaveis([...responsaveis, novoResponsavel]);
-    }
+    const promessa = idEdicao
+      ? api.put(`/responsaveis/${idEdicao}`, novoResponsavel) // ATUALIZAR (PUT)
+      : api.post('/responsaveis', novoResponsavel);          // CRIAR (POST)
 
+    promessa
+      .then(response => {
+        alert(idEdicao ? "Responsável atualizado!" : "Responsável cadastrado!");
+        limparFormResponsavel();
+        buscarResponsaveis(); 
+      })
+      .catch(error => {
+        console.error("Erro ao salvar responsável:", error);
+        alert("Erro ao salvar. Verifique o console.");
+      });
+  };
+
+  const editarResponsavel = (responsavel) => {
     setNovoResponsavel({
-      nome: "",
-      telefone: "",
-      logradouro: "",
-      numero: "",
-      bairro: "",
-      cep: "",
-      alunos: [],
+      nome: responsavel.nome,
+      telefone: responsavel.telefone,
+      logradouro: responsavel.logradouro,
+      numero: responsavel.numero,
+      bairro: responsavel.bairro,
+      cep: responsavel.cep,
     });
+    setIdEdicao(responsavel.id); 
+    window.scrollTo(0, 0); 
   };
 
-  const editarResponsavel = (index) => {
-    setNovoResponsavel(responsaveis[index]);
-    setIndexEdicao(index);
-  };
-
-  const excluirResponsavel = (index) => {
-    if (window.confirm("Deseja realmente excluir este responsável?")) {
-      setResponsaveis(responsaveis.filter((_, i) => i !== index));
+  const excluirResponsavel = (id) => {
+    if (window.confirm("Deseja realmente excluir este responsável? (Todos os alunos dele serão excluídos!)")) {
+      api.delete(`/responsaveis/${id}`) // EXCLUIR (DELETE)
+        .then(() => {
+          alert("Responsável excluído.");
+          buscarResponsaveis(); 
+        })
+        .catch(error => {
+          console.error("Erro ao excluir:", error);
+          alert("Erro ao excluir. O responsável pode ter alunos associados.");
+        });
     }
   };
 
-  const abrirFormularioAluno = (responsavelIndex) => {
-    setResponsavelSelecionado(responsavelIndex);
-    setNovoAluno({
-      nome: "",
-      instituicao: "",
-      serie: "",
-      nivelEscolaridade: "",
-      nivelOutro: "",
-      ativo: true,
-    });
-    setAdicionandoAluno(true);
+
+  // --- Funções de Aluno (com API) ---
+
+  const abrirFormularioAluno = (responsavelId) => {
+    setResponsavelSelecionado(responsavelId); 
+    setNovoAluno({ nome: "", instituicao: "", serie: "", nivelEscolaridade: "", nivelOutro: "", ativo: true });
+    setIdEdicaoAluno(null);
   };
 
-  // --- Funções de Aluno ---
   const salvarAluno = () => {
     const { nome, instituicao, serie, nivelEscolaridade } = novoAluno;
     if (!nome || !instituicao || !serie || !nivelEscolaridade) {
@@ -83,39 +118,75 @@ export default function AlunosResponsaveisPage() {
       return;
     }
 
-    const lista = [...responsaveis];
-    lista[responsavelSelecionado].alunos.push(novoAluno);
-    setResponsaveis(lista);
-    setAdicionandoAluno(false);
+    const alunoParaSalvar = {
+      ...novoAluno,
+      responsavel: { id: responsavelSelecionado } 
+    };
+
+    const promessa = idEdicaoAluno
+      ? api.put(`/alunos/${idEdicaoAluno}`, alunoParaSalvar) // ATUALIZAR (PUT)
+      : api.post('/alunos', alunoParaSalvar);                 // CRIAR (POST)
+    
+    promessa
+      .then(() => {
+        alert(idEdicaoAluno ? "Aluno atualizado!" : "Aluno salvo!");
+        limparFormAluno();
+        buscarResponsaveis(); 
+      })
+      .catch(error => {
+        console.error("Erro ao salvar aluno:", error);
+        alert("Erro ao salvar aluno. Verifique o console.");
+      });
   };
 
-  const alternarAtivo = (responsavelIndex, alunoIndex) => {
-    const lista = [...responsaveis];
-    lista[responsavelIndex].alunos[alunoIndex].ativo =
-      !lista[responsavelIndex].alunos[alunoIndex].ativo;
-    setResponsaveis(lista);
+  const editarAluno = (aluno, responsavelId) => {
+    setNovoAluno({
+      nome: aluno.nome,
+      instituicao: aluno.instituicao,
+      serie: aluno.serie,
+      nivelEscolaridade: aluno.nivelEscolaridade,
+      nivelOutro: aluno.nivelOutro || "",
+      ativo: aluno.ativo,
+    });
+    setIdEdicaoAluno(aluno.id); 
+    setResponsavelSelecionado(responsavelId); // Usa o ID do pai vindo da lista
+    window.scrollTo(0, document.getElementById('form-aluno').offsetTop);
   };
 
-  const editarAluno = (responsavelIndex, alunoIndex) => {
-    const aluno = responsaveis[responsavelIndex].alunos[alunoIndex];
-    const nome = prompt("Novo nome do aluno:", aluno.nome) || aluno.nome;
-    const instituicao = prompt("Nova instituição:", aluno.instituicao) || aluno.instituicao;
-    const serie = prompt("Nova série:", aluno.serie) || aluno.serie;
-
-    const lista = [...responsaveis];
-    lista[responsavelIndex].alunos[alunoIndex] = { ...aluno, nome, instituicao, serie };
-    setResponsaveis(lista);
+  const alternarAtivo = (aluno) => {
+    // Pega o ID do responsável (que não vem no objeto aluno por causa do JsonBackReference)
+    // Então, buscamos o ID pelo 'find' na lista principal
+    const resp = responsaveis.find(r => r.alunos.some(a => a.id === aluno.id));
+    
+    const alunoAtualizado = { 
+      ...aluno, 
+      ativo: !aluno.ativo,
+      responsavel: { id: resp.id } // Adiciona o responsável para o PUT
+    };
+    
+    api.put(`/alunos/${aluno.id}`, alunoAtualizado)
+      .then(() => {
+        buscarResponsaveis(); 
+      })
+      .catch(error => console.error("Erro ao alternar status", error));
   };
 
-  const excluirAluno = (responsavelIndex, alunoIndex) => {
+  const excluirAluno = (id) => {
     if (window.confirm("Deseja realmente excluir este aluno?")) {
-      const lista = [...responsaveis];
-      lista[responsavelIndex].alunos.splice(alunoIndex, 1);
-      setResponsaveis(lista);
+      api.delete(`/alunos/${id}`) // EXCLUIR (DELETE)
+        .then(() => {
+          alert("Aluno excluído.");
+          buscarResponsaveis(); 
+        })
+        .catch(error => {
+          console.error("Erro ao excluir:", error);
+          alert("Erro ao excluir aluno.");
+        });
     }
   };
 
-  // --- Função para montar endereço com quebra de linha ---
+
+  // --- Função para montar endereço (sem mudanças) ---
   const montarEndereco = (r) => (
     <>
       {r.logradouro}, {r.numero}<br />
@@ -143,34 +214,30 @@ export default function AlunosResponsaveisPage() {
         .alunos-tabela { width: 100%; border-collapse: collapse; margin-top: 8px; }
         .alunos-tabela th, .alunos-tabela td { border: 1px solid #ccc; padding: 6px; font-size: 14px; color: black; }
         .alunos-tabela th { background-color: #ffe9d0; }
+        .botao-cancelar { background-color: #7f8c8d; color: white; }
       `}</style>
 
-      {/* Formulário Responsável */}
-      <h2>Cadastrar Responsável</h2>
+      {/* --- Formulário Responsável (COM MÁSCARAS) --- */}
+      <h2>{idEdicao ? "Editando Responsável" : "Cadastrar Responsável"}</h2>
       <table className="form-tabela">
         <tbody>
           <tr>
             <td>Nome:</td>
             <td>
-              <input
-                type="text"
-                value={novoResponsavel.nome}
+              <input type="text" value={novoResponsavel.nome}
                 onChange={(e) => {
                   let valor = e.target.value.replace(/[^A-Za-zÀ-ÿ\s]/g, "");
                   valor = valor.replace(/^\s+/, "");
                   setNovoResponsavel({ ...novoResponsavel, nome: valor });
                 }}
-                placeholder="Nome completo"
-                maxLength="60"
+                placeholder="Nome completo" maxLength="60"
               />
             </td>
           </tr>
           <tr>
             <td>Telefone:</td>
             <td>
-              <input
-                type="text"
-                value={novoResponsavel.telefone}
+              <input type="text" value={novoResponsavel.telefone}
                 onChange={(e) => {
                   let valor = e.target.value.replace(/\D/g, "");
                   if (valor.length > 11) valor = valor.slice(0, 11);
@@ -183,19 +250,15 @@ export default function AlunosResponsaveisPage() {
                   }
                   setNovoResponsavel({ ...novoResponsavel, telefone: valor });
                 }}
-                placeholder="Telefone (com DDD)"
-                maxLength="15"
+                placeholder="Telefone (com DDD)" maxLength="15"
               />
             </td>
           </tr>
-
-          {/* Endereço */}
           <tr>
             <td>Logradouro:</td>
             <td>
-              <input
-                type="text"
-                value={novoResponsavel.logradouro}
+              <input type="text" value={novoResponsavel.logradouro}
+                // Logradouro pode ter números (ex: Rua 15), então não removemos
                 onChange={(e) => setNovoResponsavel({ ...novoResponsavel, logradouro: e.target.value })}
                 placeholder="Logradouro de residência"
               />
@@ -204,9 +267,7 @@ export default function AlunosResponsaveisPage() {
           <tr>
             <td>Número:</td>
             <td>
-              <input
-                type="text"
-                value={novoResponsavel.numero}
+              <input type="text" value={novoResponsavel.numero}
                 onChange={(e) => {
                   let valor = e.target.value.replace(/\D/g, "");
                   valor = valor.replace(/^0+/, "");
@@ -219,10 +280,13 @@ export default function AlunosResponsaveisPage() {
           <tr>
             <td>Bairro:</td>
             <td>
-              <input
-                type="text"
-                value={novoResponsavel.bairro}
-                onChange={(e) => setNovoResponsavel({ ...novoResponsavel, bairro: e.target.value })}
+              <input type="text" value={novoResponsavel.bairro}
+                onChange={(e) => {
+                  // Bairro geralmente não tem números, como solicitado
+                  let valor = e.target.value.replace(/[^A-Za-zÀ-ÿ\s]/g, "");
+                  valor = valor.replace(/^\s+/, "");
+                  setNovoResponsavel({ ...novoResponsavel, bairro: valor });
+                }}
                 placeholder="Bairro de residência"
               />
             </td>
@@ -230,9 +294,7 @@ export default function AlunosResponsaveisPage() {
           <tr>
             <td>CEP:</td>
             <td>
-              <input
-                type="text"
-                value={novoResponsavel.cep}
+              <input type="text" value={novoResponsavel.cep}
                 onChange={(e) => {
                   let valor = e.target.value.replace(/\D/g, "");
                   if (valor.length > 8) valor = valor.slice(0, 8);
@@ -245,106 +307,106 @@ export default function AlunosResponsaveisPage() {
               />
             </td>
           </tr>
-
           <tr>
             <td colSpan="2" style={{ textAlign: "center" }}>
               <button onClick={salvarResponsavel} className="botao-acao status">
-                {indexEdicao !== null ? "Salvar Alterações" : "Cadastrar Responsável"}
+                {idEdicao !== null ? "Salvar Alterações" : "Cadastrar Responsável"}
               </button>
+              {idEdicao !== null && (
+                <button onClick={limparFormResponsavel} className="botao-cancelar">
+                  Cancelar Edição
+                </button>
+              )}
             </td>
           </tr>
         </tbody>
       </table>
 
-      {/* Formulário Aluno */}
-      {adicionandoAluno && (
-        <div className="form-aluno">
-          <h3>Adicionar Aluno</h3>
-          <table className="form-tabela">
-            <tbody>
-              <tr>
-                <td>Nome:</td>
-                <td>
-                  <input
-                    type="text"
-                    value={novoAluno.nome}
-                    onChange={(e) => {
-                      let valor = e.target.value.replace(/[^A-Za-zÀ-ÿ\s]/g, "");
-                      valor = valor.replace(/^\s+/, "");
-                      setNovoAluno({ ...novoAluno, nome: valor });
-                    }}
-                    placeholder="Nome completo"
-                    maxLength="60"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td>Instituição:</td>
-                <td>
-                  <input
-                    type="text"
-                    value={novoAluno.instituicao}
-                    onChange={(e) =>
-                      setNovoAluno({ ...novoAluno, instituicao: e.target.value })
-                    }
-                    placeholder="Instituição de ensino"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td>Série:</td>
-                <td>
-                  <input
-                    type="text"
-                    value={novoAluno.serie}
-                    onChange={(e) => {
-                      let valor = e.target.value.replace(/\D/g, "");
-                      valor = valor.replace(/^0+/, "");
-                      setNovoAluno({ ...novoAluno, serie: valor });
-                    }}
-                    placeholder="Série"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td>Nível de escolaridade:</td>
-                <td>
-                  <select
-                    value={novoAluno.nivelEscolaridade}
-                    onChange={(e) => setNovoAluno({ ...novoAluno, nivelEscolaridade: e.target.value })}
-                  >
-                    <option value="">Selecione</option>
-                    <option value="Educação Infantil">Educação Infantil</option>
-                    <option value="Ensino Fundamental">Ensino Fundamental</option>
-                    <option value="Ensino Médio">Ensino Médio</option>
-                    <option value="Outro">Outro</option>
-                  </select>
-                </td>
-              </tr>
-              {novoAluno.nivelEscolaridade === "Outro" && (
+      {/* --- Formulário Aluno (COM MÁSCARAS) --- */}
+      <div className="form-aluno" id="form-aluno"> 
+        {(responsavelSelecionado || idEdicaoAluno) && ( 
+          <>
+            <h3>{idEdicaoAluno ? "Editando Aluno" : "Adicionar Aluno"}</h3>
+            <table className="form-tabela">
+              <tbody>
                 <tr>
-                  <td>Detalhar:</td>
+                  <td>Nome:</td>
                   <td>
-                    <input
-                      type="text"
-                      value={novoAluno.nivelOutro}
-                      onChange={(e) => setNovoAluno({ ...novoAluno, nivelOutro: e.target.value })}
-                      placeholder="Detalhar nível"
+                    <input type="text" value={novoAluno.nome}
+                      onChange={(e) => {
+                        let valor = e.target.value.replace(/[^A-Za-zÀ-ÿ\s]/g, "");
+                        valor = valor.replace(/^\s+/, "");
+                        setNovoAluno({ ...novoAluno, nome: valor });
+                      }}
+                      placeholder="Nome completo" maxLength="60"
                     />
                   </td>
                 </tr>
-              )}
-              <tr>
-                <td colSpan="2" style={{ textAlign: "center" }}>
-                  <button onClick={salvarAluno} className="botao-acao status">Salvar Aluno</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
+                <tr>
+                  <td>Instituição:</td>
+                  <td>
+                    <input type="text" value={novoAluno.instituicao}
+                      onChange={(e) => setNovoAluno({ ...novoAluno, instituicao: e.target.value })}
+                      placeholder="Instituição de ensino"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Série:</td>
+                  <td>
+                    <input type="text" value={novoAluno.serie}
+                      onChange={(e) => {
+                        let valor = e.target.value.replace(/\D/g, "");
+                        valor = valor.replace(/^0+/, "");
+                        setNovoAluno({ ...novoAluno, serie: valor });
+                      }}
+                      placeholder="Série (só números)"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>Nível de escolaridade:</td>
+                  <td>
+                    <select
+                      value={novoAluno.nivelEscolaridade}
+                      onChange={(e) => setNovoAluno({ ...novoAluno, nivelEscolaridade: e.target.value })}
+                    >
+                      <option value="">Selecione</option>
+                      <option value="Educação Infantil">Educação Infantil</option>
+                      <option value="Ensino Fundamental">Ensino Fundamental</option>
+                      <option value="Ensino Médio">Ensino Médio</option>
+                      <option value="Outro">Outro</option>
+                    </select>
+                  </td>
+                </tr>
+                {novoAluno.nivelEscolaridade === "Outro" && (
+                  <tr>
+                    <td>Detalhar:</td>
+                    <td>
+                      <input type="text" value={novoAluno.nivelOutro}
+                        onChange={(e) => setNovoAluno({ ...novoAluno, nivelOutro: e.target.value })}
+                        placeholder="Detalhar nível"
+                      />
+                    </td>
+                  </tr>
+                )}
+                <tr>
+                  <td colSpan="2" style={{ textAlign: "center" }}>
+                    <button onClick={salvarAluno} className="botao-acao status">
+                      {idEdicaoAluno ? "Salvar Alterações" : "Salvar Aluno"}
+                    </button>
+                    <button onClick={limparFormAluno} className="botao-cancelar">
+                      Cancelar
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </>
+        )}
+      </div>
 
-      {/* Lista */}
+      {/* --- Lista de Responsáveis e Alunos (Vindos da API) --- */}
       <h3>Lista de Responsáveis e Alunos</h3>
       {responsaveis.length === 0 ? (
         <p className="mensagem-vazia">Nenhum responsável ou aluno cadastrado.</p>
@@ -360,32 +422,33 @@ export default function AlunosResponsaveisPage() {
             </tr>
           </thead>
           <tbody>
-            {responsaveis.map((r, index) => (
-              <tr key={index}>
+            {responsaveis.map((r) => (
+              <tr key={r.id}>
                 <td>{r.nome}</td>
                 <td>{r.telefone}</td>
                 <td>{montarEndereco(r)}</td>
                 <td>
-                  <button onClick={() => abrirFormularioAluno(index)} className="botao-acao status">Adicionar Aluno</button>
-                  <button onClick={() => editarResponsavel(index)} className="botao-acao editar">Editar</button>
-                  <button onClick={() => excluirResponsavel(index)} className="botao-acao excluir">Excluir</button>
+                  <button onClick={() => abrirFormularioAluno(r.id)} className="botao-acao status">Adicionar Aluno</button>
+                  <button onClick={() => editarResponsavel(r)} className="botao-acao editar">Editar</button>
+                  <button onClick={() => excluirResponsavel(r.id)} className="botao-acao excluir">Excluir</button>
                 </td>
                 <td>
-                  {r.alunos.length > 0 && (
+                  {r.alunos && r.alunos.length > 0 && (
                     <table className="alunos-tabela">
                       <thead>
                         <tr>
                           <th>Nome</th>
                           <th>Instituição</th>
                           <th>Série</th>
-                          <th>Nível de Escolaridade</th>
+                          <th>Nível</th>
                           <th>Status</th>
                           <th>Ações</th>
+                          <th>Pagamentos</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {r.alunos.map((aluno, aIndex) => (
-                          <tr key={aIndex}>
+                        {r.alunos.map((aluno) => (
+                          <tr key={aluno.id}>
                             <td>{aluno.nome}</td>
                             <td>{aluno.instituicao}</td>
                             <td>{aluno.serie}</td>
@@ -394,11 +457,19 @@ export default function AlunosResponsaveisPage() {
                               {aluno.ativo ? "Ativo" : "Inativo"}
                             </td>
                             <td>
-                              <button onClick={() => editarAluno(index, aIndex)} className="botao-acao editar">Editar</button>
-                              <button onClick={() => alternarAtivo(index, aIndex)} className="botao-acao status">
+                              <button onClick={() => editarAluno(aluno, r.id)} className="botao-acao editar">Editar</button>
+                              <button onClick={() => alternarAtivo(aluno)} className="botao-acao status">
                                 {aluno.ativo ? "Inativar" : "Ativar"}
                               </button>
-                              <button onClick={() => excluirAluno(index, aIndex)} className="botao-acao excluir">Excluir</button>
+                              <button onClick={() => excluirAluno(aluno.id)} className="botao-acao excluir">Excluir</button>
+                              <td>
+                          <button 
+                            onClick={() => setAlunoParaHistorico(aluno)}
+                            className="botao-acao editar" // Reusa o estilo azul
+                          >
+                            Ver/Registar
+                          </button>
+                        </td>
                             </td>
                           </tr>
                         ))}
@@ -411,6 +482,12 @@ export default function AlunosResponsaveisPage() {
           </tbody>
         </table>
       )}
+      {alunoParaHistorico && (
+    <HistoricoPagamentosModal
+      aluno={alunoParaHistorico}
+      onClose={() => setAlunoParaHistorico(null)}
+    />
+  )}
     </div>
   );
 }
